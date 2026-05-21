@@ -1,0 +1,43 @@
+{
+  "name": "Default Lead",
+  "osc1": {
+    "waveform": "saw",
+    "detune_semi": 0.0,
+    "detune_cents": -7.0,
+    "level": 0.6
+  },
+  "osc2": {
+    "waveform": "saw",
+    "detune_semi": 0.0,
+    "detune_cents": 7.0,
+    "level": 0.6
+  },
+  "filter": {
+    "cutoff_hz": 1400.0,
+    "resonance": 0.25,
+    "morph": 0.0,
+    "drive": 1.4
+  },
+  "amp": {
+    "level": 0.85
+  },
+  "env1": {
+    "delay": 0.0,
+    "attack": 0.005,
+    "hold": 0.0,
+    "decay": 0.25,
+    "sustain": 0.75,
+    "release": 0.35
+  },
+  "lfo1": {
+    "shape": "sine",
+    "rate_hz": 5.0,
+    "phase_offset": 0.0,
+    "depth": 1.0
+  },
+  "mod_routes": [
+    { "source": "env1",     "destination": "amp_level",        "depth": 1.0 },
+    { "source": "env1",     "destination": "filter_cutoff_hz", "depth": 1800.0 },
+    { "source": "velocity", "destination": "filter_cutoff_hz", "depth": 600.0 }
+  ]
+}

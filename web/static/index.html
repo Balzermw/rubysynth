@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rubysynth</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="synth">
+    <header class="synth-header">
+      <div class="brand">
+        <div class="brand-name">RUBYSYNTH</div>
+        <div class="brand-sub">SOFT SYNTHESIZER · MVP</div>
+      </div>
+      <div class="display">
+        <div class="display-line line1">PATCH</div>
+        <div class="display-line line2" id="patch-name">Default Lead</div>
+      </div>
+      <div class="header-actions">
+        <button id="reload" class="hw-btn">RELOAD</button>
+        <button id="save"   class="hw-btn primary">SAVE</button>
+      </div>
+    </header>
+
+    <main class="panels">
+      <section class="panel" data-panel="osc">
+        <h2>Oscillators</h2>
+        <div class="panel-grid two-col">
+          <div class="osc-block">
+            <h3>OSC 1</h3>
+            <div class="osc-controls">
+              <div class="control">
+                <label>WAVE</label>
+                <select data-path="osc1.waveform" class="hw-select">
+                  <option value="sine">Sine</option>
+                  <option value="triangle">Triangle</option>
+                  <option value="saw">Saw</option>
+                  <option value="square">Square</option>
+                </select>
+              </div>
+              <div class="knob-cell" data-knob data-path="osc1.detune_semi" data-min="-24" data-max="24" data-default="0" data-step="1" data-label="SEMI"></div>
+              <div class="knob-cell" data-knob data-path="osc1.detune_cents" data-min="-100" data-max="100" data-default="0" data-step="1" data-label="CENTS"></div>
+              <div class="knob-cell" data-knob data-path="osc1.level" data-min="0" data-max="1" data-default="0.6" data-step="0.01" data-label="LEVEL"></div>
+            </div>
+          </div>
+          <div class="osc-block">
+            <h3>OSC 2</h3>
+            <div class="osc-controls">
+              <div class="control">
+                <label>WAVE</label>
+                <select data-path="osc2.waveform" class="hw-select">
+                  <option value="sine">Sine</option>
+                  <option value="triangle">Triangle</option>
+                  <option value="saw">Saw</option>
+                  <option value="square">Square</option>
+                </select>
+              </div>
+              <div class="knob-cell" data-knob data-path="osc2.detune_semi" data-min="-24" data-max="24" data-default="0" data-step="1" data-label="SEMI"></div>
+              <div class="knob-cell" data-knob data-path="osc2.detune_cents" data-min="-100" data-max="100" data-default="0" data-step="1" data-label="CENTS"></div>
+              <div class="knob-cell" data-knob data-path="osc2.level" data-min="0" data-max="1" data-default="0.6" data-step="0.01" data-label="LEVEL"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="filter">
+        <h2>Filter <span class="panel-sub">Low-pass</span></h2>
+        <div class="panel-grid four-col">
+          <div class="knob-cell" data-knob data-path="filter.cutoff_hz" data-min="20" data-max="18000" data-default="1400" data-step="1" data-label="CUTOFF" data-unit="Hz" data-curve="log"></div>
+          <div class="knob-cell" data-knob data-path="filter.resonance" data-min="0" data-max="0.99" data-default="0.25" data-step="0.01" data-label="RES"></div>
+          <div class="knob-cell" data-knob data-path="filter.drive" data-min="1" data-max="4" data-default="1.4" data-step="0.01" data-label="DRIVE"></div>
+        </div>
+      </section>
+
+      <section class="panel wide" data-panel="env">
+        <h2>Envelope 1 (Amp)</h2>
+        <svg id="env-viz" class="env-viz" viewBox="0 0 600 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="env-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff9a3c" stop-opacity="0.45" />
+              <stop offset="100%" stop-color="#ff9a3c" stop-opacity="0.02" />
+            </linearGradient>
+          </defs>
+          <g class="env-grid">
+            <line x1="0" y1="35"  x2="600" y2="35"  />
+            <line x1="0" y1="70"  x2="600" y2="70"  />
+            <line x1="0" y1="105" x2="600" y2="105" />
+          </g>
+          <path id="env-fill-path" fill="url(#env-fill)" />
+          <path id="env-line" stroke="#ff9a3c" stroke-width="2" fill="none" />
+          <g id="env-stage-labels" class="env-stage-labels"></g>
+        </svg>
+        <div class="env-sliders">
+          <div class="env-slider" data-env data-path="env1.delay"   data-min="0" data-max="2" data-step="0.001" data-default="0"     data-label="DELAY"   data-unit="s"></div>
+          <div class="env-slider" data-env data-path="env1.attack"  data-min="0" data-max="2" data-step="0.001" data-default="0.005" data-label="ATTACK"  data-unit="s"></div>
+          <div class="env-slider" data-env data-path="env1.hold"    data-min="0" data-max="2" data-step="0.001" data-default="0"     data-label="HOLD"    data-unit="s"></div>
+          <div class="env-slider" data-env data-path="env1.decay"   data-min="0" data-max="4" data-step="0.001" data-default="0.25"  data-label="DECAY"   data-unit="s"></div>
+          <div class="env-slider" data-env data-path="env1.sustain" data-min="0" data-max="1" data-step="0.01"  data-default="0.75"  data-label="SUSTAIN"></div>
+          <div class="env-slider" data-env data-path="env1.release" data-min="0" data-max="4" data-step="0.001" data-default="0.35"  data-label="RELEASE" data-unit="s"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="lfo">
+        <h2>LFO 1</h2>
+        <div class="panel-grid four-col">
+          <div class="control">
+            <label>SHAPE</label>
+            <select data-path="lfo1.shape" class="hw-select">
+              <option value="sine">Sine</option>
+              <option value="triangle">Triangle</option>
+              <option value="saw">Saw</option>
+              <option value="square">Square</option>
+              <option value="samplehold">S&amp;H</option>
+            </select>
+          </div>
+          <div class="knob-cell" data-knob data-path="lfo1.rate_hz"      data-min="0.01" data-max="30" data-default="5" data-step="0.01" data-label="RATE" data-unit="Hz"></div>
+          <div class="knob-cell" data-knob data-path="lfo1.phase_offset" data-min="0" data-max="1" data-default="0" data-step="0.01" data-label="PHASE"></div>
+          <div class="knob-cell" data-knob data-path="lfo1.depth"        data-min="0" data-max="1" data-default="1" data-step="0.01" data-label="DEPTH"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="amp">
+        <h2>Amp</h2>
+        <div class="panel-grid">
+          <div class="knob-cell" data-knob data-path="amp.level" data-min="0" data-max="1" data-default="0.85" data-step="0.01" data-label="MASTER"></div>
+        </div>
+      </section>
+
+      <section class="panel wide" data-panel="mod">
+        <h2>Mod Matrix</h2>
+        <table class="mod-table">
+          <thead><tr><th>Source</th><th>Destination</th><th>Depth</th><th></th></tr></thead>
+          <tbody id="mod-rows"></tbody>
+        </table>
+        <button id="add-mod" class="hw-btn">+ ADD ROUTE</button>
+      </section>
+
+      <section class="panel wide" data-panel="keyboard">
+        <h2>Keyboard</h2>
+        <div class="kbd-controls">
+          <label class="kbd-octave">OCTAVE
+            <button id="oct-down" class="hw-btn">−</button>
+            <span id="oct-label">4</span>
+            <button id="oct-up" class="hw-btn">+</button>
+          </label>
+          <label class="kbd-octave">HOLD
+            <input type="range" id="hold-ms" min="60" max="2000" step="10" value="350" />
+            <span id="hold-ms-val">350 ms</span>
+          </label>
+          <span class="kbd-hint">Click keys, or type <kbd>A S D F G H J K</kbd> · <kbd>W E T Y U</kbd> · <kbd>Z X</kbd> = octave</span>
+        </div>
+        <div id="keyboard" class="keyboard"></div>
+      </section>
+
+      <section class="panel wide" data-panel="render">
+        <h2>Render</h2>
+        <div class="render-row">
+          <label class="file-pick">
+            <span class="file-label">MIDI FILE</span>
+            <input type="file" id="midi-input" accept=".mid,.midi" />
+            <span id="midi-filename" class="filename">— none —</span>
+          </label>
+          <button id="render" class="hw-btn primary big">RENDER &amp; DOWNLOAD</button>
+        </div>
+        <p id="render-status" class="status"></p>
+      </section>
+    </main>
+
+    <footer class="synth-footer">
+      <span>44.1 kHz · 16-bit · mono</span>
+      <span class="dot"></span>
+      <span>1 voice · 2 osc · SVF · 1 env · 1 lfo</span>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

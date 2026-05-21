@@ -1,0 +1,6 @@
+/target
+/out
+/tmp
+*.wav
+.DS_Store
+*.swp
