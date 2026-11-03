@@ -202,8 +202,9 @@ async fn render_midi(
 }
 
 fn encode_wav(samples: &[f32], sample_rate: u32) -> Result<Vec<u8>> {
+    // samples is interleaved L,R,L,R,...
     let spec = hound::WavSpec {
-        channels: 1,
+        channels: 2,
         sample_rate,
         bits_per_sample: 16,
         sample_format: hound::SampleFormat::Int,

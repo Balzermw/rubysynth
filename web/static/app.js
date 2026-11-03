@@ -100,7 +100,7 @@ function buildKnob(cell) {
   function onPointerMove(e) {
     if (!dragging) return;
     const dy = startY - e.clientY;
-    const sensitivity = (e.shiftKey || fineMode) ? 600 : 200;
+    const sensitivity = (e.shiftKey || fineMode) ? 1000 : 350;
     const newNorm = Math.max(0, Math.min(1, startNorm + dy / sensitivity));
     const v = normToVal(newNorm);
     set(patch, path, v);
@@ -155,9 +155,19 @@ function buildSlider(cell) {
   const cap = cell.querySelector(".env-cap");
   const valueEl = cell.querySelector(".env-value");
 
+  function valToNorm(v) {
+    return (v - min) / (max - min);
+  }
+  function normToVal(n) {
+    n = Math.max(0, Math.min(1, n));
+    let v = min + (max - min) * n;
+    if (step) v = Math.round(v / step) * step;
+    return Math.max(min, Math.min(max, v));
+  }
+
   function render() {
     const v = get(patch, path);
-    const norm = (v - min) / (max - min);
+    const norm = valToNorm(v);
     const trackH = track.clientHeight || 130;
     const capH = 18;
     const usable = trackH - capH - 4;
@@ -167,30 +177,27 @@ function buildSlider(cell) {
     updateEnvViz();
   }
 
-  function setFromClientY(clientY) {
-    const rect = track.getBoundingClientRect();
-    const capH = 18;
-    const usable = rect.height - capH - 4;
-    const yInTrack = clientY - rect.top - capH / 2 - 2;
-    const norm = 1 - Math.max(0, Math.min(1, yInTrack / usable));
-    let v = min + (max - min) * norm;
-    if (step) v = Math.round(v / step) * step;
-    v = Math.max(min, Math.min(max, v));
-    set(patch, path, v);
-    render();
-  }
-
+  // Drag model: capture the cursor position and starting value on pointerdown.
+  // Pointermove changes the value by the accumulated delta only — clicking
+  // without dragging leaves the value unchanged. Matches the knob behaviour.
   let dragging = false;
+  let startY = 0;
+  let startNorm = 0;
+
   track.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     dragging = true;
+    startY = e.clientY;
+    startNorm = valToNorm(get(patch, path));
     cell.classList.add("dragging");
     track.setPointerCapture(e.pointerId);
-    setFromClientY(e.clientY);
   });
   track.addEventListener("pointermove", (e) => {
     if (!dragging) return;
-    setFromClientY(e.clientY);
+    const dy = startY - e.clientY;
+    const sensitivity = e.shiftKey ? 1000 : 350;
+    set(patch, path, normToVal(startNorm + dy / sensitivity));
+    render();
   });
   const stop = (e) => {
     dragging = false;
@@ -205,11 +212,9 @@ function buildSlider(cell) {
   });
   track.addEventListener("wheel", (e) => {
     e.preventDefault();
-    const norm = (get(patch, path) - min) / (max - min);
+    const norm = valToNorm(get(patch, path));
     const delta = -Math.sign(e.deltaY) * (e.shiftKey ? 0.005 : 0.02);
-    let v = min + (max - min) * Math.max(0, Math.min(1, norm + delta));
-    if (step) v = Math.round(v / step) * step;
-    set(patch, path, v);
+    set(patch, path, normToVal(norm + delta));
     render();
   }, { passive: false });
 
@@ -488,6 +493,114 @@ function makeKey(midi, color) {
 const activeAudio = new Set();
 let inflightAbort = null;
 
+// ---- Web Audio: shared AudioContext + AnalyserNode for the scope ----
+let audioCtx = null;
+let analyser = null;
+let scopeBuf = null;
+let scopeRaf = null;
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new Ctx();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0;
+    scopeBuf = new Float32Array(analyser.fftSize);
+    analyser.connect(audioCtx.destination);
+    startScope();
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function attachToAnalyser(audio) {
+  // Each new <audio> element gets its own MediaElementAudioSourceNode that
+  // routes through the analyser before reaching the speakers.
+  try {
+    const src = audioCtx.createMediaElementSource(audio);
+    src.connect(analyser);
+  } catch (e) {
+    // If the element was already wired (shouldn't happen with new Audio()),
+    // fall back to direct playback so we don't lose audio.
+    console.warn("scope tap failed; playing dry:", e);
+  }
+}
+
+function startScope() {
+  const canvas = document.getElementById("scope");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const status = document.getElementById("scope-status");
+
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  function findTrigger(buf) {
+    // Find first rising zero crossing in the first half of the buffer. Falls back to 0.
+    const half = buf.length >> 1;
+    for (let i = 1; i < half; i++) {
+      if (buf[i - 1] <= 0 && buf[i] > 0) return i;
+    }
+    return 0;
+  }
+
+  function draw() {
+    scopeRaf = requestAnimationFrame(draw);
+    if (!analyser) return;
+    analyser.getFloatTimeDomainData(scopeBuf);
+
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // grid
+    ctx.strokeStyle = "rgba(0, 255, 80, 0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
+    for (let i = 1; i < 8; i++) {
+      const x = (w * i) / 8;
+      ctx.moveTo(x, 0); ctx.lineTo(x, h);
+    }
+    for (let i = 1; i < 4; i++) {
+      const y = (h * i) / 4;
+      ctx.moveTo(0, y); ctx.lineTo(w, y);
+    }
+    ctx.stroke();
+
+    // sweep window: half the buffer, starting at the zero-crossing trigger.
+    const trig = findTrigger(scopeBuf);
+    const N = scopeBuf.length - trig;
+    const step = w / N;
+    let peak = 0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(140, 255, 160, 0.95)";
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "rgba(120, 255, 150, 0.6)";
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const s = scopeBuf[trig + i];
+      if (Math.abs(s) > peak) peak = Math.abs(s);
+      const x = i * step;
+      const y = h / 2 - s * (h / 2 - 4);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    if (status) {
+      if (peak < 0.001) status.textContent = "idle";
+      else status.textContent = `peak ${peak.toFixed(2)}`;
+    }
+  }
+  draw();
+}
+
 function stopAllAudio() {
   for (const a of activeAudio) {
     try { a.pause(); a.currentTime = 0; URL.revokeObjectURL(a.src); } catch {}
@@ -503,6 +616,10 @@ async function playNote(midi, keyEl) {
   if (inflightAbort) inflightAbort.abort();
   inflightAbort = new AbortController();
   const signal = inflightAbort.signal;
+
+  // Audio context must be created/resumed in a user gesture handler. The
+  // keyboard click counts as one.
+  ensureAudioCtx();
 
   if (keyEl) {
     keyEl.classList.add("active");
@@ -520,6 +637,8 @@ async function playNote(midi, keyEl) {
     if (signal.aborted) return;
 
     const audio = new Audio(URL.createObjectURL(blob));
+    audio.crossOrigin = "anonymous";
+    attachToAnalyser(audio);
     activeAudio.add(audio);
     audio.addEventListener("ended", () => {
       activeAudio.delete(audio);

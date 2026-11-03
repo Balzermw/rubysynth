@@ -35,6 +35,16 @@
     "phase_offset": 0.0,
     "depth": 1.0
   },
+  "chorus": {
+    "rate_hz": 0.6,
+    "depth_ms": 3.0,
+    "mix": 0.4
+  },
+  "reverb": {
+    "size": 0.6,
+    "damping": 0.4,
+    "mix": 0.25
+  },
   "mod_routes": [
     { "source": "env1",     "destination": "amp_level",        "depth": 1.0 },
     { "source": "env1",     "destination": "filter_cutoff_hz", "depth": 1800.0 },

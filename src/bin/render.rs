@@ -48,7 +48,7 @@ fn main() -> Result<()> {
     }
 
     let spec = hound::WavSpec {
-        channels: 1,
+        channels: 2,
         sample_rate: SAMPLE_RATE,
         bits_per_sample: 16,
         sample_format: hound::SampleFormat::Int,
@@ -59,6 +59,7 @@ fn main() -> Result<()> {
     let peak = samples.iter().fold(0.0_f32, |a, b| a.max(b.abs()));
     let norm = if peak > 1.0 { 0.98 / peak } else { 1.0 };
 
+    // samples is interleaved L,R,L,R,...
     for s in &samples {
         let v = (s * norm).clamp(-1.0, 1.0);
         let i = (v * i16::MAX as f32) as i16;
@@ -66,10 +67,11 @@ fn main() -> Result<()> {
     }
     writer.finalize()?;
 
+    let frames = samples.len() / 2;
     println!(
-        "wrote {} samples ({:.2}s) to {}",
-        samples.len(),
-        samples.len() as f32 / SAMPLE_RATE as f32,
+        "wrote {} stereo frames ({:.2}s) to {}",
+        frames,
+        frames as f32 / SAMPLE_RATE as f32,
         args.out.display()
     );
     Ok(())

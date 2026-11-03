@@ -182,6 +182,7 @@ html, body {
   display: grid; gap: 10px;
 }
 .panel-grid.two-col   { grid-template-columns: 1fr 1fr; }
+.panel-grid.three-col { grid-template-columns: repeat(3, 1fr); }
 .panel-grid.four-col  { grid-template-columns: repeat(4, 1fr); }
 .panel-grid.six-col   { grid-template-columns: repeat(6, 1fr); }
 
@@ -440,6 +441,36 @@ input[type="file"] {
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
   min-height: 1em;
+}
+
+/* ---------- Oscilloscope ---------- */
+.scope-wrap {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #051006 0%, #000800 100%);
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,0.8),
+    inset 0 -1px 0 rgba(0,255,80,0.05),
+    0 1px 0 rgba(255,255,255,0.04);
+  height: 200px;
+}
+.scope {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.scope-overlay {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-family: "Menlo", monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: rgba(140, 255, 160, 0.6);
+  text-shadow: 0 0 6px rgba(120, 255, 150, 0.4);
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 /* ---------- Keyboard ---------- */

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::dsp::{EnvelopeParams, FilterParams, LfoParams, OscillatorParams};
+use crate::dsp::{ChorusParams, EnvelopeParams, FilterParams, LfoParams, OscillatorParams, ReverbParams};
 use crate::mod_matrix::ModRoute;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,6 +25,8 @@ pub struct Patch {
     pub amp: AmpParams,
     pub env1: EnvelopeParams,
     pub lfo1: LfoParams,
+    pub chorus: ChorusParams,
+    pub reverb: ReverbParams,
     pub mod_routes: Vec<ModRoute>,
 }
 
@@ -63,6 +65,8 @@ impl Default for Patch {
                 release: 0.35,
             },
             lfo1: LfoParams::default(),
+            chorus: ChorusParams::default(),
+            reverb: ReverbParams::default(),
             mod_routes: vec![
                 ModRoute {
                     source: ModSource::Env1,

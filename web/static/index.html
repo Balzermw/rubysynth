@@ -126,6 +126,24 @@
         </div>
       </section>
 
+      <section class="panel" data-panel="chorus">
+        <h2>Chorus <span class="panel-sub">Juno-style</span></h2>
+        <div class="panel-grid three-col">
+          <div class="knob-cell" data-knob data-path="chorus.rate_hz"  data-min="0.05" data-max="6"   data-default="0.6" data-step="0.01"  data-label="RATE"  data-unit="Hz"></div>
+          <div class="knob-cell" data-knob data-path="chorus.depth_ms" data-min="0"    data-max="12"  data-default="3"   data-step="0.05"  data-label="DEPTH" data-unit="ms"></div>
+          <div class="knob-cell" data-knob data-path="chorus.mix"      data-min="0"    data-max="1"   data-default="0.4" data-step="0.01"  data-label="MIX"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="reverb">
+        <h2>Reverb</h2>
+        <div class="panel-grid three-col">
+          <div class="knob-cell" data-knob data-path="reverb.size"    data-min="0" data-max="1" data-default="0.6"  data-step="0.01" data-label="SIZE"></div>
+          <div class="knob-cell" data-knob data-path="reverb.damping" data-min="0" data-max="1" data-default="0.4"  data-step="0.01" data-label="DAMP"></div>
+          <div class="knob-cell" data-knob data-path="reverb.mix"     data-min="0" data-max="1" data-default="0.25" data-step="0.01" data-label="MIX"></div>
+        </div>
+      </section>
+
       <section class="panel wide" data-panel="mod">
         <h2>Mod Matrix</h2>
         <table class="mod-table">
@@ -133,6 +151,14 @@
           <tbody id="mod-rows"></tbody>
         </table>
         <button id="add-mod" class="hw-btn">+ ADD ROUTE</button>
+      </section>
+
+      <section class="panel wide" data-panel="scope">
+        <h2>Output Scope</h2>
+        <div class="scope-wrap">
+          <canvas id="scope" class="scope" width="1200" height="240"></canvas>
+          <div class="scope-overlay"><span id="scope-status">idle</span></div>
+        </div>
       </section>
 
       <section class="panel wide" data-panel="keyboard">
